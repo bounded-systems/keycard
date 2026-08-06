@@ -1,0 +1,9 @@
+name = "keycard"
+version = "0.1.0"
+defaultTargets = ["Keycard"]
+
+# No mathlib until a theorem forces it (see README: the model is small discrete
+# structures; core Lean carries the whole seed arc).
+
+[[lean_lib]]
+name = "Keycard"

@@ -1,0 +1,22 @@
+[package]
+name = "keycard-tool"
+version = "0.1.0"
+edition = "2021"
+description = "Decode OIDC token claims and lint trust policies for recyclable-name matchers. Never prints a raw token."
+license = "PolyForm-Noncommercial-1.0.0"
+repository = "https://github.com/bounded-systems/keycard"
+
+# Minimal dependency tree, on purpose: serde_json for claim output, nothing
+# else. Base64url and argument parsing are hand-rolled below — the whole
+# surface is two subcommands, and every dependency is attack surface in a
+# tool people point at credentials.
+[dependencies]
+serde_json = "1"
+
+[[bin]]
+name = "keycard"
+path = "src/main.rs"
+
+[profile.release]
+strip = true
+lto = true
