@@ -1,0 +1,29 @@
+# Merged per ci-workflows/templates/dependabot.yml guidance: the canonical
+# `github-actions` entry verbatim (keeps every action pin current, including
+# the shared osv-scan lane's — see that template's header for the full
+# rationale), plus this repo's own `cargo` ecosystem. The `ci` commit-message
+# prefix is load-bearing: semantic-PR gates in this org reject `deps:`.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "ci"
+  - package-ecosystem: "cargo"
+    directory: "/tools"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      cargo:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "ci"

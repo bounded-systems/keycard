@@ -1,0 +1,26 @@
+name: standard
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  standard:
+    uses: bounded-systems/.github/.github/workflows/repo-standard.yml@00686548e81f3659ca273d185421b668c8d70f90
+    with:
+      security: true
+      test: true
+      runtime: none
+      # elan first (toolchain pinned by lean-toolchain), then the proofs,
+      # then the tool. Egress note: the installer talks to
+      # elan.lean-lang.org and toolchain downloads come from
+      # releases.lean-lang.org (plural — verified against a live build).
+      # A failing `lake build` IS the red check: theorems self-certify.
+      test-command: >-
+        curl --proto '=https' --tlsv1.2 -sSf https://elan.lean-lang.org/elan-init.sh
+        | sh -s -- -y --default-toolchain none
+        && export PATH="$HOME/.elan/bin:$PATH"
+        && lake build
+        && cargo test --manifest-path tools/Cargo.toml --locked
+        && cargo clippy --manifest-path tools/Cargo.toml --all-targets -- -D warnings
