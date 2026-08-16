@@ -46,7 +46,7 @@ here is a statement about `Keycard.holdsClaim`, not about `keeperd`.
 
 ### Transcript disclosure, specifically
 
-The third arc proves properties about when a session transcript may cross the
+The fourth arc proves properties about when a session transcript may cross the
 boundary to a third party. It has its own wrong reading, so it is closed here
 too:
 

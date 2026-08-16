@@ -1,4 +1,4 @@
--- Root module: all three arcs, in reading order.
+-- Root module: all four arcs, in reading order.
 --
 -- Arc 1 — OIDC subjects: a `sub` is locally unique and never reassigned.
 import Keycard.Model
@@ -9,7 +9,10 @@ import Keycard.Matcher
 -- issuer-attested claim binds it to `i` and is live at `t`.
 import Keycard.Claim
 import Keycard.Signing
--- Arc 3 — transcript disclosure: what may cross the boundary to a third
+-- Arc 3 — identity provenance: the gate is vendor-blind; identity roots
+-- must name guests injectively.
+import Keycard.Identity
+-- Arc 4 — transcript disclosure: what may cross the boundary to a third
 -- party, under whose identity, and what may confer that.
 import Keycard.Transcript
 import Keycard.Disclosure
