@@ -9,3 +9,6 @@ import Keycard.Matcher
 -- issuer-attested claim binds it to `i` and is live at `t`.
 import Keycard.Claim
 import Keycard.Signing
+-- Arc 3 — identity provenance: the gate is vendor-blind; identity roots
+-- must name guests injectively.
+import Keycard.Identity
