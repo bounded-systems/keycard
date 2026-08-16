@@ -113,7 +113,7 @@ def DecisionGrounded (P : Policy) : Prop :=
     disclosure nor withhold it. Both directions matter, exactly as in
     `Signing.lean`: authority that mutable local state can toggle is not
     authority, it is a setting. -/
-def AmbientBlind (P : Policy) : Prop :=
+def EnvBlind (P : Policy) : Prop :=
   ∀ b e₁ e₂ s u, P b e₁ s u = P b e₂ s u
 
 /-- **Private-guarding.** A session that read private material discloses
@@ -164,7 +164,7 @@ theorem policyCorrect_revocable : Revocable policyCorrect := by
 theorem policyCorrect_decisionGrounded : DecisionGrounded policyCorrect := by
   intro _ _ _; rfl
 
-theorem policyCorrect_ambientBlind : AmbientBlind policyCorrect := by
+theorem policyCorrect_envBlind : EnvBlind policyCorrect := by
   intro b _ _ _ _
   cases b <;> rfl
 
@@ -196,7 +196,7 @@ theorem policyBareShare_not_decisionGrounded : ¬ DecisionGrounded policyBareSha
 
 /-- **The org's own share step is not ambient-blind.** One `export` flips
     the disclosure decision. -/
-theorem policyEnvVar_not_ambientBlind : ¬ AmbientBlind policyEnvVar := by
+theorem policyEnvVar_not_envBlind : ¬ EnvBlind policyEnvVar := by
   intro h
   exact absurd (h none Env.stock Env.shareOn Session.publicOnly uploadAuthed) (by decide)
 
@@ -237,23 +237,23 @@ theorem policyFailOpen_not_decisionGrounded : ¬ DecisionGrounded policyFailOpen
 /-! ## The guest invariant and the capstone -/
 
 /-- **No sequence of session actions writes a decision.** The disclosure
-    analogue of `holdsClaim_guest_invariant`: `GuestStep` has no constructor
+    analogue of `holdsClaim_guest_invariant`: `SessionStep` has no constructor
     that touches `book`, and this turns that absence into a checked
     property. -/
-theorem decision_guest_invariant (w : World) (ss : List GuestStep) :
+theorem decision_session_invariant (w : Situation) (ss : List SessionStep) :
     (w.run ss).book = w.book := by
   induction ss generalizing w with
   | nil => rfl
-  | cons s ss ih => simp [World.run, World.step, ih]
+  | cons s ss ih => simp [Situation.run, Situation.step, ih]
 
 /-- **Capstone: no session action discloses anything.** Starting from
     today's state — no owner decision — no sequence of session actions,
     of any length, yields a permitted share under `policyCorrect`. The
     session cannot talk itself into disclosure. -/
-theorem no_guest_disclosure (e : Env) (ss : List GuestStep) (s : Session) (u : Upload) :
-    policyCorrect (World.run { book := none, env := e } ss).book
-                  (World.run { book := none, env := e } ss).env s u = false := by
-  rw [decision_guest_invariant]
+theorem no_guest_disclosure (e : Env) (ss : List SessionStep) (s : Session) (u : Upload) :
+    policyCorrect (Situation.run { book := none, env := e } ss).book
+                  (Situation.run { book := none, env := e } ss).env s u = false := by
+  rw [decision_session_invariant]
   rfl
 
 /-! ## The executable side

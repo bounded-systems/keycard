@@ -155,7 +155,7 @@ def uploadRedacted : Upload := { uploadAuthed with redacted := true }
 /-! ## The owner's decision
 
 The analogue of `Claim.lean`'s `Ledger`: a record only the owner writes.
-`GuestStep` below has no constructor that touches it. -/
+`SessionStep` below has no constructor that touches it. -/
 
 /-- An owner's disclosure decision.
 
@@ -192,7 +192,7 @@ What a session can do on its own. Read the constructors as exhaustive: a
 session may set environment variables and may observe the network. There is
 no constructor that writes a `Decision`. That absence is the disclosure
 analogue of `holdsClaim_guest_invariant`, and
-`decision_guest_invariant` proves it. -/
+`decision_session_invariant` proves it. -/
 
 /-- Session-mutable ambient state.
 
@@ -217,28 +217,28 @@ def Env.stock : Env := { shareEnv := false, serviceReachable := false }
 def Env.shareOn : Env := { shareEnv := true, serviceReachable := true }
 
 /-- Everything a session can do without the owner. Note what is absent. -/
-inductive GuestStep where
+inductive SessionStep where
   /-- `export BOUNDED_PATHBASE_SHARE=on`. -/
   | setShareEnv (b : Bool)
   /-- Observe (or lose) egress to the vendor. -/
   | setReachable (b : Bool)
 deriving Repr
 
-def GuestStep.apply (s : GuestStep) (e : Env) : Env :=
+def SessionStep.apply (s : SessionStep) (e : Env) : Env :=
   match s with
   | .setShareEnv b  => { e with shareEnv := b }
   | .setReachable b => { e with serviceReachable := b }
 
 /-- A world: the owner's decision, plus the session's ambient state. -/
-structure World where
+structure Situation where
   book : Policybook
   env  : Env
 
-def World.step (w : World) (s : GuestStep) : World :=
+def Situation.step (w : Situation) (s : SessionStep) : Situation :=
   { w with env := s.apply w.env }
 
 /-- Run an arbitrary sequence of session actions. -/
-def World.run (w : World) : List GuestStep → World
+def Situation.run (w : Situation) : List SessionStep → Situation
   | []      => w
   | s :: ss => (w.step s).run ss
 

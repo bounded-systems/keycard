@@ -102,7 +102,7 @@ is precisely the state the convention is in when a claim grants nothing.
 | `signerCorrect_sound` | **Soundness.** No signature without a live, issuer-attested claim on *this* issue at *this* time. |
 | `released_revokes` | **Release revokes.** Once every claim binding `g` to `i` is released at or before `t`, `g` cannot sign at `t`. Quantifying over `t` is what excludes a signer that resolves liveness once, at mint time. |
 | `no_amplification` | **Attenuation.** A ledger whose every claim is on `i` confers nothing on any other issue — including a different issue in the *same repo*. |
-| `holdsClaim_guest_invariant` | **Issuer-attested.** No sequence of guest actions changes what the ledger says. `GuestStep` has no constructor that writes it; this theorem is what makes that absence checkable. |
+| `holdsClaim_guest_invariant` | **Issuer-attested.** No sequence of guest actions changes what the ledger says. `SessionStep` has no constructor that writes it; this theorem is what makes that absence checkable. |
 | `no_guest_escalation` | The capstone. A guest without a live claim cannot obtain one by acting — not by rewriting local config, not by presenting a claim record it wrote itself, not by any sequence of the two. |
 | `signerCorrect_ambientBlind` | **Ambient state confers nothing.** Local configuration can neither switch signing on nor switch it off. |
 
@@ -171,7 +171,7 @@ right now:
 
 `policyEnvVar` is **the org's own share step**, and the pair of results about
 it is the point of the arc: it is `Revocable` — the `--name` guard against
-the anonymous fallback genuinely holds — and it is *not* `AmbientBlind`. One
+the anonymous fallback genuinely holds — and it is *not* `EnvBlind`. One
 `export` moves the disclosure decision. That is #521's `commit.gpgsign` fault
 at a different boundary: authority that mutable local state can toggle is not
 authority, it is a setting.
