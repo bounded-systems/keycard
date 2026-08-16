@@ -13,10 +13,16 @@ jobs:
       test: true
       runtime: none
       # elan first (toolchain pinned by lean-toolchain), then the proofs,
-      # then the tool. Egress note: the installer talks to
-      # elan.lean-lang.org and toolchain downloads come from
-      # releases.lean-lang.org (plural — verified against a live build).
+      # then the tool, then the TLC model check. Egress note: the installer
+      # talks to elan.lean-lang.org and toolchain downloads come from
+      # releases.lean-lang.org (plural — verified against a live build);
+      # check.sh additionally fetches the pinned tla2tools release asset from
+      # github.com and verifies its digest before running it.
       # A failing `lake build` IS the red check: theorems self-certify.
+      # check.sh is a gate for the same reason, inverted: two of its three
+      # configs are SUPPOSED to fail, so it asserts each outcome rather than
+      # reporting it — a counterexample that stops reproducing has to go red,
+      # not green. It needs java, which ubuntu-latest carries preinstalled.
       test-command: >-
         curl --proto '=https' --tlsv1.2 -sSf https://elan.lean-lang.org/elan-init.sh
         | sh -s -- -y --default-toolchain none
@@ -24,3 +30,4 @@ jobs:
         && lake build
         && cargo test --manifest-path tools/Cargo.toml --locked
         && cargo clippy --manifest-path tools/Cargo.toml --all-targets -- -D warnings
+        && bash specs/tla/check.sh

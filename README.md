@@ -44,6 +44,21 @@ They are cited so the model can be checked *against* what happened — not
 because evaluating them measures anything about a live system. A `#guard`
 here is a statement about `Keycard.holdsClaim`, not about `keeperd`.
 
+### Transcript disclosure, specifically
+
+The fourth arc proves properties about when a session transcript may cross the
+boundary to a third party. It has its own wrong reading, so it is closed here
+too:
+
+> **"We modelled disclosure" does not mean anything is prevented from
+> uploading.**
+
+Nothing in this org consults these definitions. The org's share step
+(`.github-private` → `.claude/share-session.sh`) has never heard of them; it
+is gated by an environment variable, and `policyEnvVar` in
+`Keycard/Disclosure.lean` is that gate, proved **unsound** as authority. The
+model names a defect in a shipped implementation; it does not repair it.
+
 ## What OIDC asserts — and what it doesn't
 
 An OIDC token asserts **where and as what something ran** — the execution
@@ -87,7 +102,7 @@ is precisely the state the convention is in when a claim grants nothing.
 | `signerCorrect_sound` | **Soundness.** No signature without a live, issuer-attested claim on *this* issue at *this* time. |
 | `released_revokes` | **Release revokes.** Once every claim binding `g` to `i` is released at or before `t`, `g` cannot sign at `t`. Quantifying over `t` is what excludes a signer that resolves liveness once, at mint time. |
 | `no_amplification` | **Attenuation.** A ledger whose every claim is on `i` confers nothing on any other issue — including a different issue in the *same repo*. |
-| `holdsClaim_guest_invariant` | **Issuer-attested.** No sequence of guest actions changes what the ledger says. `GuestStep` has no constructor that writes it; this theorem is what makes that absence checkable. |
+| `holdsClaim_guest_invariant` | **Issuer-attested.** No sequence of guest actions changes what the ledger says. `SessionStep` has no constructor that writes it; this theorem is what makes that absence checkable. |
 | `no_guest_escalation` | The capstone. A guest without a live claim cannot obtain one by acting — not by rewriting local config, not by presenting a claim record it wrote itself, not by any sequence of the two. |
 | `signerCorrect_ambientBlind` | **Ambient state confers nothing.** Local configuration can neither switch signing on nor switch it off. |
 
@@ -118,6 +133,57 @@ the predicate a signer runs to decide sign-or-refuse and the predicate the
 theorems quantify over should be one artifact, not two implementations that
 agree until they don't. `holdsClaim` runs; the `#guard` lines at the foot of
 `Signing.lean` are checked by `lake build`.
+
+## Transcript disclosure (`Keycard/Transcript.lean`, `Keycard/Disclosure.lean`, `specs/tla/`)
+
+> When may a session transcript cross the boundary to a third party, and
+> under whose identity?
+
+A transcript is not a diff. It carries the conversation, the tool calls and
+the dead ends, so it can carry secrets, tokens, internal hostnames and the
+contents of private repositories. That makes an upload a **privileged
+effect** — the same shape as signing, one boundary over — and the arc asks
+what may confer it.
+
+Two results answer questions that were open in prose:
+
+| Theorem | What it settles |
+|---|---|
+| `unlisted_published_is_public` | "Unlisted" is **not** a privacy property. Once the URL is posted on a public pull request the audience is everyone; the vendor's server-side setting and the org's publishing decision compose, and the composition is public. |
+| `anon_refused_under_any_decision` | The anonymous endpoint is refused under **every** decision an owner could write, including the most permissive. It is not a policy question: an anonymous upload has no owner, so no account exists from which to delete it. |
+
+The second is why the safe default is not "share less" but "share nothing
+until an account we control is on the other end".
+
+### Why these are not vacuous
+
+Same discipline as the signing arc — every property stated over an abstract
+`Policy`, every one paired with a named policy that violates it, closed by
+kernel `decide`. Three of the four broken policies are running or proposed
+right now:
+
+| Broken policy | The mistake | Violates |
+|---|---|---|
+| `policyBareShare` | uploads with whatever auth it has, falling back to anonymous | revocability, decision-grounding |
+| `policyEnvVar` | an environment variable decides disclosure | ambient-blindness, decision-grounding |
+| `policyUnlistedIsEnough` | unlisted treated as sufficient for private content | private-guarding, redaction |
+| `policyFailOpen` | absence of a decision read as permission | decision-grounding |
+
+`policyEnvVar` is **the org's own share step**, and the pair of results about
+it is the point of the arc: it is `Revocable` — the `--name` guard against
+the anonymous fallback genuinely holds — and it is *not* `EnvBlind`. One
+`export` moves the disclosure decision. That is #521's `commit.gpgsign` fault
+at a different boundary: authority that mutable local state can toggle is not
+authority, it is a setting.
+
+### The temporal half (`specs/tla/`)
+
+The Lean theorems quantify over a decision record; they cannot see that
+`path share` reads the decision at preflight and acts on it after the derive.
+`specs/tla/disclosure.tla` splits every check-then-act across two actions and
+lets TLC find the interleaving. Three configs, and the middle one carries the
+result: **the TOCTOU and the anonymous fallback are independent faults, and
+neither fix closes the other.** See `specs/tla/README.md`.
 
 ## The tool (`tools/`)
 
@@ -150,6 +216,7 @@ secret. `docs/keycards.md` is the prose explainer.
 ```sh
 lake build                                  # the proofs (toolchain pinned in lean-toolchain)
 cargo test --manifest-path tools/Cargo.toml # the tool
+bash specs/tla/check.sh                     # the TLC model check (needs java)
 ```
 
 CI note: elan's installer talks to `elan.lean-lang.org` and the toolchain
