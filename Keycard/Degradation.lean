@@ -62,9 +62,10 @@ These are theorems about the model in `Authority.lean`. **They do not prove
 that any deployed workflow refuses correctly**, and nothing here has observed
 a live run. `content-catalog`'s workflows have never heard of these
 definitions; a green `lake build` says the rules are coherent and that three
-named strategies violate them — including the one that shipped. Closing this
-arc is not closing `content-catalog#10`, and the two must not be reported as
-one. See the README.
+named strategies violate them — including the one that shipped. The incident
+itself was repaired in YAML (`content-catalog#11`, then `#13`), and that
+repair owes nothing to this arc: a green build here would have said exactly
+as much on the day the bug was live. See the README.
 -/
 
 namespace Keycard.Degradation
