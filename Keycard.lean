@@ -20,3 +20,11 @@ import Keycard.Disclosure
 -- hand over a weaker one while the caller is told it worked.
 import Keycard.Authority
 import Keycard.Degradation
+
+-- ENFORCEMENT PROBE (.github-private#594) — DELIBERATE TYPE ERROR.
+-- This line exists to make `standard / test` report `failure`, so a merge
+-- attempt against it measures whether the `ci-green-keycard` ruleset actually
+-- refuses the merge, rather than inferring it from #464's probe on a different
+-- repo. It must NEVER be merged; the branch is deleted once the attempt is
+-- recorded. If you are reading this on `main`, the experiment leaked — revert.
+example : Nat := "this is not a Nat"
