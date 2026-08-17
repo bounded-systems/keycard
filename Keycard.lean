@@ -1,4 +1,4 @@
--- Root module: all four arcs, in reading order.
+-- Root module: all five arcs, in reading order.
 --
 -- Arc 1 — OIDC subjects: a `sub` is locally unique and never reassigned.
 import Keycard.Model
@@ -16,3 +16,7 @@ import Keycard.Identity
 -- party, under whose identity, and what may confer that.
 import Keycard.Transcript
 import Keycard.Disclosure
+-- Arc 5 — degrading authority: a revoked keycard must shut the door, not
+-- hand over a weaker one while the caller is told it worked.
+import Keycard.Authority
+import Keycard.Degradation

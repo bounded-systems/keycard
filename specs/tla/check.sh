@@ -39,17 +39,20 @@ fail=0
 ok()  { pass=$((pass + 1)); echo "  ok   — $1"; }
 bad() { fail=$((fail + 1)); echo "  FAIL — $1"; }
 
-# run <config> — TLC output on stdout, artifacts cleaned up after.
+# run <spec> <config> [extra TLC flags…] — TLC output on stdout, artifacts
+# cleaned up after.
 run() {
-  java -cp "$JAR" tlc2.TLC -config "$1" disclosure.tla 2>&1 | grep -vE '^Picked up'
+  local spec="$1" cfg="$2"
+  shift 2
+  java -cp "$JAR" tlc2.TLC "$@" -config "$cfg" "$spec.tla" 2>&1 | grep -vE '^Picked up'
   rm -rf states
-  rm -f disclosure_TTrace_*.tla disclosure_TTrace_*.bin
+  rm -f "$spec"_TTrace_*.tla "$spec"_TTrace_*.bin
 }
 
 echo "disclosure.tla"
 
 # --- racy: the behaviour shipped today -------------------------------------
-out="$(run disclosure-racy.cfg)"
+out="$(run disclosure disclosure-racy.cfg)"
 case "$out" in
   *"Invariant NoUnconsentedDisclosure is violated"*)
     ok "racy: TOCTOU reproduces — consent withdrawn during the derive window is not seen" ;;
@@ -61,7 +64,7 @@ esac
 # unretractable upload still happens. If this config ever reports
 # NoUnconsentedDisclosure instead, the two faults are no longer separated and
 # the config has stopped making its point.
-out="$(run disclosure-anon.cfg)"
+out="$(run disclosure disclosure-anon.cfg)"
 case "$out" in
   *"Invariant NoAnonUpload is violated"*)
     ok "anon: anonymous fallback reproduces even with an atomic check" ;;
@@ -74,7 +77,64 @@ case "$out" in
 esac
 
 # --- safe: every invariant and the liveness property -------------------------
-out="$(run disclosure-safe.cfg)"
+out="$(run disclosure disclosure-safe.cfg)"
+case "$out" in
+  *"Model checking completed. No error has been found"*)
+    ok "safe: all invariants and Termination hold across the full state space" ;;
+  *) bad "safe: expected a clean run; TLC reported an error" ;;
+esac
+case "$out" in
+  *"Deadlock"*) bad "safe: deadlock reported — the Terminating stutter is not covering the terminal state" ;;
+  *)            ok "safe: no deadlock" ;;
+esac
+
+echo
+echo "degradation.tla"
+
+# --- shipped: both faults live — the behaviour that degraded on 2026-08-16 ---
+# Both invariants break here, so which one TLC reports first is an artifact of
+# its search order. Assert only that a violation is found; the per-fault
+# assertions belong to the two isolating configs below, where exactly one
+# invariant CAN break and the assertion is therefore stable.
+out="$(run degradation degradation-shipped.cfg)"
+case "$out" in
+  *"is violated"*)
+    ok "shipped: the degradation reproduces — revocation did not close the door" ;;
+  *) bad "shipped: expected an invariant violation; the config came back clean" ;;
+esac
+
+# --- fallback / partial: the independence result ----------------------------
+# -continue makes TLC explore the FULL state space and report EVERY violated
+# invariant rather than halting at the first. That is what turns "the other
+# invariant holds" into a checked statement: without it, an unreported
+# invariant might simply break in a state the search stopped short of, and the
+# independence claim would be an artifact of the halt rather than a result.
+out="$(run degradation degradation-fallback.cfg -continue)"
+case "$out" in
+  *"Invariant NoUndernamedEffect is violated"*)
+    ok "fallback: substitution reproduces even when partials are reported honestly" ;;
+  *) bad "fallback: expected NoUndernamedEffect to be violated; it was not" ;;
+esac
+case "$out" in
+  *"Invariant NoSilentPartial is violated"*)
+    bad "fallback: NoSilentPartial broke too — the config no longer isolates substitution" ;;
+  *) ok "fallback: NoSilentPartial holds over the whole state space" ;;
+esac
+
+out="$(run degradation degradation-partial.cfg -continue)"
+case "$out" in
+  *"Invariant NoSilentPartial is violated"*)
+    ok "partial: a mid-run revocation still ships green with the || removed" ;;
+  *) bad "partial: expected NoSilentPartial to be violated; it was not" ;;
+esac
+case "$out" in
+  *"Invariant NoUndernamedEffect is violated"*)
+    bad "partial: NoUndernamedEffect broke too — the config no longer isolates the partial" ;;
+  *) ok "partial: NoUndernamedEffect holds over the whole state space" ;;
+esac
+
+# --- safe: every invariant and the liveness property -------------------------
+out="$(run degradation degradation-safe.cfg)"
 case "$out" in
   *"Model checking completed. No error has been found"*)
     ok "safe: all invariants and Termination hold across the full state space" ;;
