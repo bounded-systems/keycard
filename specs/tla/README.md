@@ -221,14 +221,16 @@ did not interact. One run keeps the traces readable by eye.
 ## Claim boundary
 
 These are properties of **these models**. TLC exploring every interleaving
-says nothing about whether any deployed sharer re-reads consent at commit, or
-whether any deployed workflow refuses when its credential is revoked — and the
-measured answer today is that neither does, and that nothing in this org
-consults any of it. See the repo README.
+says nothing about whether any deployed sharer re-reads consent at commit —
+and the measured answer today is that it does not — nor about how any deployed
+workflow handles a revoked credential. Nothing in this org consults any of it.
+See the repo README.
 
 In particular, a clean `degradation-safe.cfg` is **not** a statement that
-`content-catalog#10` is fixed. That is a separate change to four workflow
-files with its own evidence, and the two must not be reported as one.
+`content-catalog`'s workflows are correct. They were repaired in YAML
+(`content-catalog#11` removed the fallback, `#13` replaced the credential with
+brokered per-workflow OIDC mints), with their own evidence, and that repair
+owes nothing to this spec.
 
 The warning `front-desk-scheduler/specs/lean/README.md` paid for applies
 here verbatim: the 2026-07-27 bug was *not a wrong proof but a proof of the
