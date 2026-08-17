@@ -126,6 +126,11 @@ Four workflows in `bounded-systems/content-catalog` read it that way
 `secrets.BOOTSTRAP_TOKEN`. The `||` did not fail; it resolved to the next
 term, which is repo-scoped and read-only by org default.
 
+Those workflows have since been repaired — `content-catalog#11` removed the
+fallback, `content-catalog#13` replaced the credential with brokered
+per-workflow OIDC mints — so the YAML above is a **historical citation**, not
+current code. The spec models what happened; the repair owes nothing to it.
+
 So revocation has **two distinct places to land**, and only the first is
 visible to the Lean model:
 
