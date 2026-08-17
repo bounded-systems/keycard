@@ -16,12 +16,19 @@ revoked the PAT behind `secrets.BOOTSTRAP_TOKEN`. The `||` did not fail — it
 resolved to the next term. Revocation therefore did not close the door; it
 **substituted a weaker principal and reported success**.
 
+Those workflows were repaired the same day (`content-catalog#11` removed the
+fallback; `content-catalog#13` replaced the credential with brokered
+per-workflow OIDC mints), so the fixtures below cite a **closed incident**.
+That is the `Signing.lean` discipline, not a weakening of it: a fixture is
+drawn from what happened so the model can be checked against it, and none of
+these theorems observed the live system or contributed to its repair.
+
 ## How these theorems avoid being vacuous
 
 The discipline is `Signing.lean`'s, unchanged: every property is stated over
 an abstract `Runner`, and every one is paired with a **named runner that
 violates it**, closed by kernel `decide`. Each broken runner is a real
-strategy, and one of them is the shipped `||`:
+strategy, and one of them is the `||` that shipped:
 
 | runner | the mistake | violates |
 |---|---|---|

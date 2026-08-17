@@ -62,19 +62,28 @@ model names a defect in a shipped implementation; it does not repair it.
 ### Degrading authority, specifically
 
 The fifth arc models a credential that, when revoked, is silently replaced by
-a weaker one. Its wrong reading is the most tempting of the three, because
-the incident behind it is open:
+a weaker one. Its wrong reading:
 
-> **"We modelled the `||` fallback" does not mean the workflows are fixed.**
+> **This models a defect; it does not fix one.**
 
-The four `bounded-systems/content-catalog` workflows that read
-`${{ secrets.BOOTSTRAP_TOKEN || secrets.GITHUB_TOKEN }}` still read it that
-way. Fixing them is `bounded-systems/content-catalog#10` — four edits to four
-YAML files, with its own evidence. **Closing this arc does not close that
-issue, and a green `lake build` here is not a reason to close it.** What this
-arc establishes is that the failure mode has a name, that the two halves of
-it are independent, and that three named strategies for "handling" a revoked
+The incident it is drawn from has since been repaired in the real system —
+`bounded-systems/content-catalog#11` removed the `||` fallback, and
+`content-catalog#13` replaced the credential outright with brokered,
+per-workflow OIDC mints (`content-catalog#10`, closed). That repair happened
+in YAML, with its own evidence, and **owes nothing to these theorems**.
+Nothing in this org consults these definitions, and a green `lake build` here
+would have said exactly as much on the day the bug was live. What this arc
+establishes is that the failure mode has a name, that the two halves of it are
+independent, and that three named strategies for "handling" a revoked
 credential each fail in a stated way.
+
+> This paragraph previously asserted that the four workflows "still read it
+> that way", and that the incident was open. Both stopped being true between
+> this arc being branched and merged. The correction is kept visible rather
+> than silently rewritten, because a claim boundary that misstates the world
+> is the exact failure this repo exists to prevent — and because arc 5 is
+> itself about a fact that quietly stopped holding while something went on
+> relying on it (`#13`).
 
 ## What OIDC asserts — and what it doesn't
 
