@@ -59,6 +59,23 @@ is gated by an environment variable, and `policyEnvVar` in
 `Keycard/Disclosure.lean` is that gate, proved **unsound** as authority. The
 model names a defect in a shipped implementation; it does not repair it.
 
+### Degrading authority, specifically
+
+The fifth arc models a credential that, when revoked, is silently replaced by
+a weaker one. Its wrong reading is the most tempting of the three, because
+the incident behind it is open:
+
+> **"We modelled the `||` fallback" does not mean the workflows are fixed.**
+
+The four `bounded-systems/content-catalog` workflows that read
+`${{ secrets.BOOTSTRAP_TOKEN || secrets.GITHUB_TOKEN }}` still read it that
+way. Fixing them is `bounded-systems/content-catalog#10` — four edits to four
+YAML files, with its own evidence. **Closing this arc does not close that
+issue, and a green `lake build` here is not a reason to close it.** What this
+arc establishes is that the failure mode has a name, that the two halves of
+it are independent, and that three named strategies for "handling" a revoked
+credential each fail in a stated way.
+
 ## What OIDC asserts — and what it doesn't
 
 An OIDC token asserts **where and as what something ran** — the execution
@@ -184,6 +201,73 @@ The Lean theorems quantify over a decision record; they cannot see that
 lets TLC find the interleaving. Three configs, and the middle one carries the
 result: **the TOCTOU and the anonymous fallback are independent faults, and
 neither fix closes the other.** See `specs/tla/README.md`.
+
+## Degrading authority (`Keycard/Authority.lean`, `Keycard/Degradation.lean`, `specs/tla/degradation.tla`)
+
+> When the authority a policy named is revoked, does the operation refuse —
+> or proceed under a weaker principal that happens to be lying around?
+
+```yaml
+GITHUB_TOKEN: ${{ secrets.BOOTSTRAP_TOKEN || secrets.GITHUB_TOKEN }}
+```
+
+A 2026-08-16 credential audit revoked the PAT behind `secrets.BOOTSTRAP_TOKEN`
+in `bounded-systems/content-catalog`, where four workflows read it that way.
+The `||` did not fail. It resolved to the next term — repo-scoped and
+read-only by org default — so revocation did not close the door, it
+**substituted a weaker principal and reported success**. Two consequences, both
+green: the cross-repo write visited every repo and wrote nothing, and the org
+enumeration narrowed to public repos only, shipping a partial catalog that is
+committed *and* SLSA-attested.
+
+This is a fourth failure mode, not a restatement of the first three. The
+principal is not lying about itself (`signerSelfAsserted`), the credential
+*is* correctly revoked (`released_revokes`), and no authority is amplified
+(`no_amplification`). Authority is **reduced**, and the reduction is invisible
+at the call site.
+
+| Theorem | What it says |
+|---|---|
+| `degradation_is_unobservable` | Under the shipped `||`, the report is identical whether or not the credential was revoked. This is the formal content of the word "silently" — and it is `rfl`, because that runner cannot produce any other report. |
+| `degradation_changes_effects` | …while the set of repos actually touched is not identical. Same signal, different world: that pair is the incident. |
+| `revoked_refuses_under_any_fallback` | The correct runner refuses a revoked authority under **every** fallback the environment could supply — including one that would cover the operation outright. A revocation the caller can route around is not a revocation. |
+| `fallback_enumeration_is_public_only` | The narrowing, on the fixtures: every repo the degraded enumeration reached is public. The private ones left the catalog without anything failing. |
+| `fxGithubToken_strictly_weaker` | The premise, checked rather than asserted: the substitute carries a strict subset of the grants. |
+
+### Why these are not vacuous
+
+Same discipline: every property stated over an abstract `Runner`, every one
+paired with a named runner that violates it, closed by kernel `decide`.
+
+| Broken runner | The mistake | Violates |
+|---|---|---|
+| `runnerFallback` | `A \|\| B` — revocation resolves to the next term | all four |
+| `runnerBestEffort` | loops the targets, greens on whatever it reached | `Faithful` only |
+| `runnerSufficientFallback` | substitutes, but only when the substitute suffices | all but `Faithful` |
+
+The last two rows are load-bearing: they violate **disjoint** sets of
+properties. That is what shows `Faithful` and `ActsAsNamed` are independent
+rather than two spellings of one idea — reporting failures honestly does not
+make the effects attributable to the right principal, and removing the `||`
+does not stop a truncated run from shipping green.
+
+`FallbackBlind` is `AmbientBlind` (`Signing.lean`) and `EnvBlind`
+(`Disclosure.lean`) at a third boundary, and the sentence is the same one:
+authority that ambient state can supply is not authority, it is a setting.
+`secrets.GITHUB_TOKEN` is ambient in the strictest sense — nobody puts it
+there, which is what makes `||` so easy to write and so hard to notice.
+
+### The temporal half
+
+The Lean theorems cannot see that the run is not one step: the credential is
+selected when the expression is evaluated and used over the minutes that
+follow, one target at a time. So revocation has two places to land — before
+selection, causing substitution, and mid-run, truncating work already under
+way. `specs/tla/degradation.tla` splits `Select` from `Visit` and lets TLC
+find both. Four configs; the middle two carry the result, exhibiting the same
+independence in both directions, and they are checked under TLC's `-continue`
+so that "the other invariant holds" is a statement about the whole state space
+rather than about where the search stopped.
 
 ## The tool (`tools/`)
 
