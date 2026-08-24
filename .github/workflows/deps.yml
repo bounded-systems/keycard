@@ -99,4 +99,4 @@ jobs:
     # exist. Measured 2026-08-04: Dependabot's first fleet run bumped mint's
     # tag-anchored refs (v0.3.1 → v0.5.0) in the same PRs that left every
     # `# main`-commented osv-scan pin untouched. Keep the comment a real tag.
-    uses: bounded-systems/ci-workflows/.github/workflows/osv-scan.yml@fabeb107b84055dc0599ce4de7d6c788eafa971f # v0.1.3
+    uses: bounded-systems/ci-workflows/.github/workflows/osv-scan.yml@30978ba6776c30081379e23fa20a12f36db3a48c # v0.1.4
