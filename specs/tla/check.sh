@@ -22,7 +22,7 @@ cd "$here" || exit 1
 
 JAR="${TLA2TOOLS:-$here/.tla2tools.jar}"
 JAR_URL="https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar"
-JAR_SHA="ab323b79802aedc3203b3f9af37c6aca3ed43f4e0225b36f2aa77b26de46c05f"
+JAR_SHA="eabd140a70f49eb9305a3bd3f3df944eddf87e5a90d329789085f8953a80533a"
 
 if [ ! -f "$JAR" ]; then
   echo "fetching tla2tools v1.8.0 -> $JAR"
